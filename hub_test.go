@@ -20,7 +20,7 @@ func TestHub_MakeInPipe(t *testing.T) {
 
 	go func() {
 		for {
-			fmt.Println(<-out, <-out2)
+			fmt.Println("out:", <-out, ", out2:", <-out2)
 		}
 	}()
 
