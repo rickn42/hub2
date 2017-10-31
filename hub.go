@@ -12,7 +12,7 @@ type BufPipe = chan Message
 
 type Done = chan struct{}
 
-type Filter = func(interface{}) (interface{}, bool)
+type Filter = func(Message) (Message, bool)
 
 type Hub struct {
 	broadcast chan Message
@@ -32,15 +32,12 @@ func NewHub() (hub *Hub) {
 	}
 
 	go func() {
-		for {
-			select {
-			case v := <-hub.broadcast:
-				hub.mu2.RLock()
-				for _, buf := range hub.outPipes {
-					buf <- v
-				}
-				hub.mu2.RUnlock()
+		for v := range hub.broadcast {
+			hub.mu2.RLock()
+			for _, buf := range hub.outPipes {
+				buf <- v
 			}
+			hub.mu2.RUnlock()
 		}
 	}()
 
@@ -64,7 +61,7 @@ func (hub *Hub) MakeInPipe() (c Pipe) {
 	return c
 }
 
-func (hub *Hub) RemoveInPipe(c Pipe) {
+func (hub *Hub) DestroyInPipe(c Pipe) {
 	hub.mu.Lock()
 	if _, ok := hub.inPipes[c]; ok {
 		delete(hub.inPipes, c)
@@ -101,7 +98,7 @@ func (hub *Hub) MakeOutPipe(bufSize int, filters ...Filter) (c Pipe) {
 	return c
 }
 
-func (hub *Hub) RemoveOutPipe(c Pipe) {
+func (hub *Hub) DestroyOutPipe(c Pipe) {
 	hub.mu2.Lock()
 	if buf, ok := hub.outPipes[c]; ok {
 		delete(hub.outPipes, c)
