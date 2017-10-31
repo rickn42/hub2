@@ -36,3 +36,44 @@ for i := 1; i < 100; i++ {
 //out: 8 , out2: 16
 //...
 ```
+
+### Benchmark
+
+```go
+func BenchmarkHub(b *testing.B) {
+	
+	const inCnt = 100
+	const outCnt = 100
+	
+	hub := hub2.NewHub()
+	
+	ins := [inCnt]chan interface{}{}
+	for i := range ins {
+		ins[i] = hub.MakeInPipe()
+	}
+
+	outs := [outCnt]chan interface{}{}
+	for i := range outs {
+		outs[i] = hub.MakeOutPipe(100)
+		go func(p chan interface{}) {
+			for range p {
+			}
+		}(outs[i])
+	}
+
+	for i := 0; i < b.N; i++ {
+		ins[i%inCnt] <- i
+	}
+}
+```
+
+```
+inCnt = 10, outCnt = 10 
+300000	      3518 ns/op
+
+inCnt = 100, outCnt = 100 
+100000	     21198 ns/op
+
+inCnt = 1000, outCnt = 1000
+10000	    210393 ns/op
+```

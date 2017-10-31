@@ -31,15 +31,15 @@ func TestHub_MakeInPipe(t *testing.T) {
 
 func BenchmarkHub(b *testing.B) {
 	hub := hub2.NewHub()
+	const inCnt = 100
+	const outCnt = 100
 
-	const cnt = 1000
-
-	ins := [cnt]chan interface{}{}
+	ins := [inCnt]chan interface{}{}
 	for i := range ins {
 		ins[i] = hub.MakeInPipe()
 	}
 
-	outs := [cnt]chan interface{}{}
+	outs := [outCnt]chan interface{}{}
 	for i := range outs {
 		outs[i] = hub.MakeOutPipe(100)
 		go func(p chan interface{}) {
@@ -49,6 +49,6 @@ func BenchmarkHub(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		ins[i%cnt] <- i
+		ins[i%inCnt] <- i
 	}
 }
